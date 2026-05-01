@@ -14,17 +14,27 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-      body { font-family: 'Inter', sans-serif; }
+      body { 
+        font-family: 'Inter', sans-serif; 
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* Previne flashes de conteúdo não estilizado */
+      [id="root"]:empty { display: none; }
+      
+      /* Ajuste fino para inputs no mobile */
+      input, select, textarea {
+        font-size: 16px !important; /* Evita zoom automático no iOS */
+      }
     </style>
   </head>
-  <body class="bg-slate-100">
+  <body class="bg-slate-100 antialiased">
     <div id="root"></div>
 
     <script type="text/babel">
       const { useState, useEffect } = React;
-      const { Calculator, Calendar, DollarSign, Send, UserCheck, Clock } = lucide;
-
+      
       function App() {
+        const [name, setName] = useState('');
         const [amount, setAmount] = useState(1000);
         const [months, setMonths] = useState(6);
         const [cpf, setCpf] = useState('');
@@ -42,7 +52,17 @@
           today.setDate(today.getDate() + 30);
           const formattedDate = today.toISOString().split('T')[0];
           setFirstPaymentDate(formattedDate);
+          
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
         }, []);
+
+        useEffect(() => {
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
+        });
 
         const handleCpfChange = (e) => {
           let value = e.target.value.replace(/\D/g, '');
@@ -76,78 +96,103 @@
         };
 
         const handleSendWhatsApp = () => {
+          if (name.length < 3) {
+            alert("Por favor, preencha seu nome completo.");
+            return;
+          }
           if (cpf.length < 14) {
             alert("Por favor, preencha o CPF corretamente.");
             return;
           }
 
-          const text = `*SOLICITAÇÃO DE EMPRÉSTIMO*%0A%0A` +
-                       `👤 *Identificação (CPF):* ${cpf}%0A` +
+          const text = `*NOVA SOLICITAÇÃO DE EMPRÉSTIMO*%0A%0A` +
+                       `👤 *Nome:* ${name}%0A` +
+                       `🆔 *CPF:* ${cpf}%0A` +
                        `💰 *Valor Solicitado:* ${formatCurrency(amount)}%0A` +
-                       `🗓 *Prazo:* ${months} meses%0A` +
-                       `💵 *Valor da Parcela:* ${formatCurrency(installment)}%0A` +
+                       `🗓 *Prazo:* ${months} meses%0A%0A` +
+                       `💵 *Parceria Mensal:* ${formatCurrency(installment)}%0A` +
                        `📊 *Total a Pagar:* ${formatCurrency(totalPayment)}%0A` +
                        `📅 *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}%0A%0A` +
-                       `O cliente aguarda análise do cadastro.`;
+                       `_O cliente aguarda retorno via WhatsApp._`;
                        
           window.open(`https://wa.me/${yourWhatsAppNumber}?text=${text}`, '_blank');
         };
 
-        const isFormValid = cpf.length === 14 && amount > 0 && firstPaymentDate !== '';
+        const isFormValid = name.length >= 3 && cpf.length === 14 && amount > 0 && firstPaymentDate !== '';
 
         return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden border border-white">
+          <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 bg-slate-100">
+            <div className="bg-white max-w-md w-full rounded-[2.5rem] shadow-2xl overflow-hidden border border-white">
               
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 text-white text-center">
+              {/* Header */}
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-8 text-white text-center">
                 <div className="flex justify-center mb-4">
-                  <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
-                    <i data-lucide="calculator" style={{width: '36px', height: '36px'}}></i>
+                  <div className="bg-white/10 p-5 rounded-3xl backdrop-blur-md border border-white/10">
+                    <i data-lucide="calculator" className="w-10 h-10 text-white"></i>
                   </div>
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight">Simulador de Crédito</h1>
-                <p className="text-blue-100 text-sm opacity-90 mt-1 font-medium">Transparência total na sua simulação</p>
+                <h1 className="text-3xl font-black tracking-tight leading-none mb-2">Simulador</h1>
+                <p className="text-blue-100 text-base opacity-90 font-medium">Crédito Rápido e Fácil</p>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-6 sm:p-8 space-y-6">
+                
+                {/* Campo Nome */}
                 <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="user-check" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                    Seu CPF
+                  <label className="flex items-center text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                    <i data-lucide="user" className="mr-2 text-blue-600 w-4 h-4"></i>
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-lg font-bold text-slate-700 placeholder:text-slate-300"
+                  />
+                </div>
+
+                {/* Campo CPF */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                    <i data-lucide="user-check" className="mr-2 text-blue-600 w-4 h-4"></i>
+                    CPF
                   </label>
                   <input
                     type="text"
                     placeholder="000.000.000-00"
                     value={cpf}
                     onChange={handleCpfChange}
-                    className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-lg font-mono"
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-xl font-mono font-bold text-slate-700 placeholder:text-slate-300"
                   />
                 </div>
 
+                {/* Campo Valor */}
                 <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="dollar-sign" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
+                  <label className="flex items-center text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                    <i data-lucide="dollar-sign" className="mr-2 text-blue-600 w-4 h-4"></i>
                     Valor do Empréstimo
                   </label>
                   <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">R$</span>
                     <input
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(Number(e.target.value))}
-                      className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-xl font-bold"
+                      className="w-full pl-16 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-2xl font-black text-slate-800"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                      <i data-lucide="calendar" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                      Prazo (Meses)
+                {/* Campo Prazo */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end ml-1">
+                    <label className="flex items-center text-xs font-black text-slate-400 uppercase tracking-widest">
+                      <i data-lucide="calendar" className="mr-2 text-blue-600 w-4 h-4"></i>
+                      Parcelas
                     </label>
-                    <span className="text-blue-700 font-black bg-blue-50 px-3 py-1 rounded-lg text-xs">
-                      {months} meses
+                    <span className="text-blue-700 font-black bg-blue-100 px-4 py-1.5 rounded-xl text-sm">
+                      {months}x
                     </span>
                   </div>
                   <input
@@ -156,53 +201,54 @@
                     max="24"
                     value={months}
                     onChange={(e) => setMonths(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="w-full h-3 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
                   />
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1 uppercase tracking-tighter">
+                    <span>1 mês</span>
+                    <span>12 meses</span>
+                    <span>24 meses</span>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="clock" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                    1º Vencimento
-                  </label>
-                  <input
-                    type="date"
-                    value={firstPaymentDate}
-                    onChange={(e) => setFirstPaymentDate(e.target.value)}
-                    className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-slate-700"
-                  />
-                </div>
-
-                <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
-                  <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Parcela Mensal</h3>
-                  <div className="text-4xl font-black mb-4">
+                {/* Resultado */}
+                <div className="bg-slate-900 rounded-[2rem] p-7 text-white shadow-2xl shadow-blue-900/20 mt-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <i data-lucide="calculator" className="w-20 h-20"></i>
+                  </div>
+                  <h3 className="text-blue-400 text-[11px] font-black uppercase tracking-[3px] mb-2 relative z-10">Mensalidade Estimada</h3>
+                  <div className="text-5xl font-black mb-6 relative z-10 tracking-tight">
                     {formatCurrency(installment)}
                   </div>
                   
-                  <div className="space-y-2 pt-4 border-t border-white/10 text-xs">
+                  <div className="space-y-3 pt-5 border-t border-white/10 text-sm relative z-10 font-medium">
                     <div className="flex justify-between text-slate-400">
-                      <span>Taxa aplicada:</span>
-                      <span className="text-white font-bold">10% a.m.</span>
+                      <span>Juros Mensais:</span>
+                      <span className="text-white font-bold">10%</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Total final:</span>
+                      <span>Montante Total:</span>
                       <span className="text-white font-bold">{formatCurrency(totalPayment)}</span>
                     </div>
                   </div>
                 </div>
 
+                {/* Botão de Envio */}
                 <button
                   onClick={handleSendWhatsApp}
                   disabled={!isFormValid}
-                  className={`w-full flex items-center justify-center space-x-3 py-4 rounded-2xl font-black text-base transition-all shadow-lg ${
+                  className={`w-full flex items-center justify-center space-x-4 py-5 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl ${
                     isFormValid 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/30' 
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                   }`}
                 >
-                  <span>SOLICITAR EMPRÉSTIMO</span>
-                  <i data-lucide="send" style={{width: '18px', height: '18px'}}></i>
+                  <span className="uppercase tracking-widest">Enviar Proposta</span>
+                  <i data-lucide="send" className="w-6 h-6"></i>
                 </button>
+                
+                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  Sujeito a análise de crédito
+                </p>
               </div>
             </div>
           </div>
@@ -211,225 +257,6 @@
 
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<App />);
-      
-      // Inicializa os ícones após o render
-      setTimeout(() => lucide.createIcons(), 100);
-    </script>
-  </body>
-</html><!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simulador de Empréstimo</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React e Babel para processar JSX no navegador -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-      body { font-family: 'Inter', sans-serif; }
-    </style>
-  </head>
-  <body class="bg-slate-100">
-    <div id="root"></div>
-
-    <script type="text/babel">
-      const { useState, useEffect } = React;
-      const { Calculator, Calendar, DollarSign, Send, UserCheck, Clock } = lucide;
-
-      function App() {
-        const [amount, setAmount] = useState(1000);
-        const [months, setMonths] = useState(6);
-        const [cpf, setCpf] = useState('');
-        const [firstPaymentDate, setFirstPaymentDate] = useState('');
-        const [installment, setInstallment] = useState(0);
-        const [totalPayment, setTotalPayment] = useState(0);
-        
-        const interestRate = 0.10; // 10% ao mês
-        const yourWhatsAppNumber = "5511980376965"; // SUBSTITUA PELO SEU NÚMERO REAL
-
-        useEffect(() => {
-          const today = new Date();
-          today.setDate(today.getDate() + 30);
-          const formattedDate = today.toISOString().split('T')[0];
-          setFirstPaymentDate(formattedDate);
-        }, []);
-
-        const handleCpfChange = (e) => {
-          let value = e.target.value.replace(/\D/g, '');
-          if (value.length <= 11) {
-            value = value.replace(/^(\d{3})(\d)/, "$1.$2");
-            value = value.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
-            value = value.replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
-            setCpf(value);
-          }
-        };
-
-        useEffect(() => {
-          if (amount > 0 && months > 0) {
-            const pmt = amount * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
-            setInstallment(pmt);
-            setTotalPayment(pmt * months);
-          } else {
-            setInstallment(0);
-            setTotalPayment(0);
-          }
-        }, [amount, months]);
-
-        const formatCurrency = (value) => {
-          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-        };
-
-        const formatDateDisplay = (dateStr) => {
-          if (!dateStr) return "";
-          const [year, month, day] = dateStr.split('-');
-          return `${day}/${month}/${year}`;
-        };
-
-        const handleSendWhatsApp = () => {
-          if (cpf.length < 14) {
-            alert("Por favor, preencha o CPF corretamente.");
-            return;
-          }
-
-          const text = `*SOLICITAÇÃO DE EMPRÉSTIMO*%0A%0A` +
-                       `👤 *Identificação (CPF):* ${cpf}%0A` +
-                       `💰 *Valor Solicitado:* ${formatCurrency(amount)}%0A` +
-                       `🗓 *Prazo:* ${months} meses%0A` +
-                       `💵 *Valor da Parcela:* ${formatCurrency(installment)}%0A` +
-                       `📊 *Total a Pagar:* ${formatCurrency(totalPayment)}%0A` +
-                       `📅 *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}%0A%0A` +
-                       `O cliente aguarda análise do cadastro.`;
-                       
-          window.open(`https://wa.me/${yourWhatsAppNumber}?text=${text}`, '_blank');
-        };
-
-        const isFormValid = cpf.length === 14 && amount > 0 && firstPaymentDate !== '';
-
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden border border-white">
-              
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 text-white text-center">
-                <div className="flex justify-center mb-4">
-                  <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
-                    <i data-lucide="calculator" style={{width: '36px', height: '36px'}}></i>
-                  </div>
-                </div>
-                <h1 className="text-2xl font-extrabold tracking-tight">Simulador de Crédito</h1>
-                <p className="text-blue-100 text-sm opacity-90 mt-1 font-medium">Transparência total na sua simulação</p>
-              </div>
-
-              <div className="p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="user-check" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                    Seu CPF
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="000.000.000-00"
-                    value={cpf}
-                    onChange={handleCpfChange}
-                    className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-lg font-mono"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="dollar-sign" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                    Valor do Empréstimo
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
-                      className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-xl font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                      <i data-lucide="calendar" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                      Prazo (Meses)
-                    </label>
-                    <span className="text-blue-700 font-black bg-blue-50 px-3 py-1 rounded-lg text-xs">
-                      {months} meses
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="24"
-                    value={months}
-                    onChange={(e) => setMonths(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center text-[11px] font-black text-slate-500 uppercase tracking-[2px]">
-                    <i data-lucide="clock" class="mr-2 text-blue-600" style={{width: '14px', height: '14px'}}></i>
-                    1º Vencimento
-                  </label>
-                  <input
-                    type="date"
-                    value={firstPaymentDate}
-                    onChange={(e) => setFirstPaymentDate(e.target.value)}
-                    className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-slate-700"
-                  />
-                </div>
-
-                <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl">
-                  <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Parcela Mensal</h3>
-                  <div className="text-4xl font-black mb-4">
-                    {formatCurrency(installment)}
-                  </div>
-                  
-                  <div className="space-y-2 pt-4 border-t border-white/10 text-xs">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Taxa aplicada:</span>
-                      <span className="text-white font-bold">10% a.m.</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Total final:</span>
-                      <span className="text-white font-bold">{formatCurrency(totalPayment)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleSendWhatsApp}
-                  disabled={!isFormValid}
-                  className={`w-full flex items-center justify-center space-x-3 py-4 rounded-2xl font-black text-base transition-all shadow-lg ${
-                    isFormValid 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
-                >
-                  <span>SOLICITAR EMPRÉSTIMO</span>
-                  <i data-lucide="send" style={{width: '18px', height: '18px'}}></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<App />);
-      
-      // Inicializa os ícones após o render
-      setTimeout(() => lucide.createIcons(), 100);
     </script>
   </body>
 </html>
