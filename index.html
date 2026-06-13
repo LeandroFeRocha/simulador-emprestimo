@@ -72,9 +72,28 @@
           return `${day}/${month}/${year}`;
         };
 
+        // NOVA FUNÇÃO PROTEGIDA CONTRA QUEBRA DE EMOJIS
         const handleSendWhatsApp = () => {
-          const text = `*SOLICITAÇÃO DE EMPRÉSTIMO*%0A%0A👤 *Nome:* ${name}%0A🆔 *CPF:* ${cpf}%0A💰 *Valor:* ${formatCurrency(amount)}%0A🗓 *Prazo:* ${months}x%0A💵 *Parcela:* ${formatCurrency(installment)}%0A📊 *Total:* ${formatCurrency(totalPayment)}%0A📅 *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}`;
-          window.open(`https://wa.me/${yourWhatsAppNumber}?text=${text}`, '_blank');
+          const emojiNome = String.fromCodePoint(0x1F464);      // 👤
+          const emojiCpf = String.fromCodePoint(0x1F194);       // 🆔
+          const emojiValor = String.fromCodePoint(0x1F4B0);     // 💰
+          const emojiPrazo = String.fromCodePoint(0x1F5D3);     // 🗓
+          const emojiParcela = String.fromCodePoint(0x1F4B5);   // 💵
+          const emojiTotal = String.fromCodePoint(0x1F4CA);     // 📊
+          const emojiVencimento = String.fromCodePoint(0x1F4C5); // 📅
+
+          const textMessage = `*SOLICITAÇÃO DE EMPRÉSTIMO*
+
+${emojiNome} *Nome:* ${name}
+${emojiCpf} *CPF:* ${cpf}
+${emojiValor} *Valor:* ${formatCurrency(amount)}
+${emojiPrazo} *Prazo:* ${months}x
+${emojiParcela} *Parcela:* ${formatCurrency(installment)}
+${emojiTotal} *Total:* ${formatCurrency(totalPayment)}
+${emojiVencimento} *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}`;
+
+          const encodedText = encodeURIComponent(textMessage);
+          window.open(`https://wa.me/${yourWhatsAppNumber}?text=${encodedText}`, '_blank');
         };
 
         const isFormValid = name.length >= 3 && cpf.length === 14 && amount > 0;
