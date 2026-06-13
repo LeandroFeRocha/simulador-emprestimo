@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@lucide/lab@latest"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -72,28 +73,21 @@
           return `${day}/${month}/${year}`;
         };
 
-        // AJUSTE: String linear combinada com os Unicodes e %0A explícito
         const handleSendWhatsApp = () => {
-          const emojiNome = String.fromCodePoint(0x1F464);      // 👤
-          const emojiCpf = String.fromCodePoint(0x1F194);       // 🆔
-          const emojiValor = String.fromCodePoint(0x1F4B0);     // 💰
-          const emojiPrazo = String.fromCodePoint(0x1F5D3);     // 🗓
-          const emojiParcela = String.fromCodePoint(0x1F4B5);   // 💵
-          const emojiTotal = String.fromCodePoint(0x1F4CA);     // 📊
-          const emojiVencimento = String.fromCodePoint(0x1F4C5); // 📅
+          // Construção da mensagem limpa com quebras de linha (\n) e os emojis reais inseridos diretamente
+          const textMessage = `*SOLICITAÇÃO DE EMPRÉSTIMO*\n\n` +
+            `👤 *Nome:* ${name}\n` +
+            `🆔 *CPF:* ${cpf}\n` +
+            `💰 *Valor:* ${formatCurrency(amount)}\n` +
+            `🗓 *Prazo:* ${months}x\n` +
+            `💵 *Parcela:* ${formatCurrency(installment)}\n` +
+            `📊 *Total:* ${formatCurrency(totalPayment)}\n` +
+            `📅 *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}`;
 
-          // Montagem linear blindada para evitar quebras de codificação de string
-          const textMessage = `*SOLICITAÇÃO DE EMPRÉSTIMO*%0A%0A` +
-            `${emojiNome} *Nome:* ${name}%0A` +
-            `${emojiCpf} *CPF:* ${cpf}%0A` +
-            `${emojiValor} *Valor:* ${formatCurrency(amount)}%0A` +
-            `${emojiPrazo} *Prazo:* ${months}x%0A` +
-            `${emojiParcela} *Parcela:* ${formatCurrency(installment)}%0A` +
-            `${emojiTotal} *Total:* ${formatCurrency(totalPayment)}%0A` +
-            `${emojiVencimento} *1º Vencimento:* ${formatDateDisplay(firstPaymentDate)}`;
+          // Transforma de forma segura o texto completo (com emojis e quebras de linha) para formato URL válido
+          const cleanText = encodeURIComponent(textMessage);
 
-          // Como já usamos %0A manualmente acima, fazemos apenas o encode dos componentes dinâmicos de texto para total segurança
-          window.open(`https://wa.me/${yourWhatsAppNumber}?text=${textMessage}`, '_blank');
+          window.open(`https://wa.me/${yourWhatsAppNumber}?text=${cleanText}`, '_blank');
         };
 
         const isFormValid = name.length >= 3 && cpf.length === 14 && amount > 0;
@@ -110,7 +104,7 @@
               <div className="p-6 space-y-5">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold" placeholder="Digite seu nome" />
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold" placeholder="Digite seu name" />
                 </div>
 
                 <div>
